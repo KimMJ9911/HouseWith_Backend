@@ -15,7 +15,7 @@ public class RoomKeyword {
     @Column(name = "keyword_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "article_id")
     private Article article;
 

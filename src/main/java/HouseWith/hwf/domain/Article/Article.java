@@ -31,12 +31,11 @@ public class Article {
     //학기
     private String quarter;
     //키워드
-    @OneToMany(
+    @OneToOne(
             mappedBy = "article" ,
-            cascade = CascadeType.ALL ,
             orphanRemoval = true
     )
-    private List<RoomKeyword> roomKeywords = new ArrayList<>();
+    private RoomKeyword roomKeyword;
 
     //최대 인원 수
     private Integer access_max;
@@ -44,20 +43,13 @@ public class Article {
     private String comment;
     private String open_url;
 
-    //총 인원
     @OneToMany(
             mappedBy = "article" ,
-            cascade = CascadeType.ALL ,
-            orphanRemoval = true
-    )
-    private List<Member> members = new ArrayList<>();
-
-    @OneToMany(
-            mappedBy = "article" ,
-            cascade = CascadeType.ALL ,
             orphanRemoval = true
     )
     private List<JoinRequest> joinRequests = new ArrayList<>();
+
+
 
     public Article(
             Long articleId ,
@@ -103,7 +95,6 @@ public class Article {
             Integer access_max ,
             String comment ,
             String open_url ,
-            Member member ,
             JoinRequest joinRequest
     ) {
         this.createdTime = createdTime;
@@ -112,14 +103,12 @@ public class Article {
         this.access_max = access_max;
         this.comment = comment;
         this.open_url = open_url;
-        this.roomKeywords.add(roomKeyword);
-        this.members.add(member);
+        this.roomKeyword = roomKeyword;
         this.joinRequests.add(joinRequest);
     }
 
     public void set_roomKeyword(RoomKeyword keyword) {
-        roomKeywords.add(keyword);
-        keyword.set_Article(this);
+        this.roomKeyword = keyword;
     }
 
     public void set_joinRequest(JoinRequest request) {

@@ -1,5 +1,8 @@
 package HouseWith.hwf.web.JoinMate.Controller;
 
+import HouseWith.hwf.DTO.ArticleDTO;
+import HouseWith.hwf.DTO.MemberDTO;
+import HouseWith.hwf.domain.Article.ArticleRepository;
 import HouseWith.hwf.domain.JoinRequest.JoinRequest;
 import HouseWith.hwf.domain.JoinRequest.JoinRequestRepository;
 import HouseWith.hwf.domain.Member.Member;
@@ -11,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
@@ -21,7 +23,7 @@ import java.util.List;
 public class JoinController {
     private final JoinMateService joinMateService;
     private final OwnerService ownerService;
-    private final JoinRequestRepository joinRequestRepository;
+    private final ArticleRepository articleRepository;
 
     /**
      * 6/26 -
@@ -38,30 +40,39 @@ public class JoinController {
      * 6/26 -
      * 원하는 방에 신청하여 WAITING 상태로 방에 소속
      * @param articleId : 글 목록 반환
-     * @param member : 가입한 멤버
-     * @return
+     * @param memberId : 가입한 멤버
+     * @return : 방에 가입 신청
+     *
+     * 7/8 - 수정 완료
+     * 잘못된 쿼리 방향성 잡기
+     * 비효율적인 엔티티 및 관계 수정 완료
      */
     @PostMapping("joinMember")
-    public ResponseEntity<?> joinMember(@RequestParam Long articleId,
-                                        @RequestBody Member member) {
-        JoinRequest join = joinMateService.ToJoin(articleId , member);
-        joinRequestRepository.save(join);
-
+    public ResponseEntity<?> joinMember(@RequestParam Long articleId ,
+                                        @RequestParam Long memberId) {
+        joinMateService.ToJoin(articleId, memberId);
         return ResponseEntity.ok("신청 완료");
     }
 
+
     /**
      * 가입 수락 / 거절 버튼
-     * @param joinRequest
+     *
      */
     @PostMapping("requests/accept")
-    public void acceptMember(@RequestBody JoinRequest joinRequest) {
-        joinMateService.Accept_member(joinRequest);
+    public ResponseEntity<?> acceptMember(@RequestParam Long memberId ,
+                                          @RequestParam String joinStatus) {
+        ownerService.Request_To_Join(memberId , joinStatus);
+
+        return ResponseEntity.ok("가입 수락 완료");
     }
 
     @PostMapping("requests/reject")
-    public void rejectMember(@RequestBody JoinRequest joinRequest) {
-        joinMateService.Reject_member(joinRequest);
+    public ResponseEntity<?> rejectMember(@RequestParam Long memberId ,
+                                          @RequestParam String joinStatus) {
+        ownerService.Request_To_Join(memberId , joinStatus);
+
+        return ResponseEntity.ok("가입 수락 완료");
     }
 
     /**
@@ -69,7 +80,7 @@ public class JoinController {
      * 매일 새벽 4시에 초기화
      *
      */
-
+    @DeleteMapping
     public void expiration() {
         ownerService.deleteExpiredRequests();
     }

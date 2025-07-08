@@ -1,5 +1,7 @@
 package HouseWith.hwf.domain.Member;
 
+import HouseWith.hwf.DTO.MemberDTO;
+import HouseWith.hwf.DTO.QMemberDTO;
 import HouseWith.hwf.domain.JoinRequest.Custom.JoinStatus;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -44,9 +46,10 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
      */
 
     @Override
-    public void deleteOverThreshold(LocalDateTime threshold) {
+    public void updateOverThreshold(LocalDateTime threshold) {
         long deleteCount = queryFactory
-                .delete(joinRequest)
+                .update(joinRequest)
+                .set(joinRequest.joinStatus, JoinStatus.NON)
                 .where(
                         //in 은 or 조건으로 받아지고
                         joinRequest.joinStatus.in(JoinStatus.WAITING , JoinStatus.REJECTED) ,
@@ -56,5 +59,13 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
                 .execute();
         em.flush();
         em.clear();
+    }
+
+    @Override
+    public Member findByMemberId(Long memberId) {
+        return queryFactory
+                .selectFrom(member)
+                .where(member.id.eq(memberId))
+                .fetchOne();
     }
 }

@@ -1,17 +1,27 @@
 package HouseWith.hwf.domain.Article;
 
 import HouseWith.hwf.DTO.*;
+import HouseWith.hwf.domain.JoinRequest.Custom.JoinStatus;
+import HouseWith.hwf.domain.JoinRequest.JoinRequest;
+import HouseWith.hwf.domain.JoinRequest.QJoinRequest;
 import HouseWith.hwf.domain.Member.Member;
+import com.querydsl.core.group.GroupBy;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
+import javax.swing.text.html.Option;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static HouseWith.hwf.domain.Article.QArticle.article;
+import static HouseWith.hwf.domain.JoinRequest.QJoinRequest.joinRequest;
 import static HouseWith.hwf.domain.Keywords.QRoomKeyword.roomKeyword;
 import static HouseWith.hwf.domain.Member.QMember.member;
+import static com.querydsl.core.types.Projections.list;
 
 @RequiredArgsConstructor
 public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
@@ -48,13 +58,45 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
      * 6/26 -
      * article_Id 로 게시글 검색
      *
+     * 7/8 - 수장
+     * article id로 해당 방의 정보들 전체 반환
+     * 방에 속한 member 들 전부 반환
      */
     @Override
-    public Article findArticlesById(Long articleId) {
-        return queryFactory
-                .selectFrom(article)
+    public Optional<DormitoryDTO> findArticleByAcceptedMember(Long articleId) {
+        Map<Long , DormitoryDTO> result = queryFactory
+                .from(article)
+                .leftJoin(article.joinRequests , joinRequest)
+                .leftJoin(joinRequest.member , member)
+                .on(joinRequest.joinStatus.in(JoinStatus.ACCEPTED , JoinStatus.OWNER))
                 .where(article.id.eq(articleId))
-                .fetchOne();
+                .transform(GroupBy.groupBy(article.id).as(
+                        Projections.constructor(DormitoryDTO.class ,
+                                article.id ,
+                                article.createdTime ,
+                                article.dormitory ,
+                                article.title ,
+                                article.quarter ,
+                                article.access_max ,
+                                article.comment ,
+                                article.open_url ,
+                                list(
+                                        Projections.constructor(MemberDTO.class ,
+                                                member.id ,
+                                                joinRequest.joinStatus ,
+                                                member.name ,
+                                                member.phone ,
+                                                member.email ,
+                                                member.nickname ,
+                                                member.sex ,
+                                                member.dormitoryName).skipNulls()
+                                ))
+                ));
+
+        DormitoryDTO dto = result.get(articleId);
+
+        if (dto == null) return Optional.empty();
+        else return Optional.of(dto);
     }
 
     /**
@@ -79,7 +121,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                         article.comment ,
                         article.open_url))
                 .from(article)
-                .join(article.roomKeywords , roomKeyword)
+                .join(article.roomKeyword , roomKeyword)
                 .where(
                         search_keyEq_title(search_key) ,
                         search_keyEq_comment(search_key) ,
@@ -134,25 +176,29 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
         return dormitory != null ? article.dormitory.eq(dormitory) : null;
     }
 
+    public Article findArticlesById(Long articleId) {
+        return queryFactory
+                .selectFrom(article)
+                .where(article.id.eq(articleId))
+                .fetchOne();
+    }
+
+
     /**
-     *
-     * 6/23 -
-     * 방에 속한 인원 보여주기
-     * 방의 id 를 통해 속한 인원 받아오기
-     *
-     * 7/4 - 계획
-     * 방에 속한 인원들과 함께 인원의 대표 키워드 3가지 보여주기
-     * 키워드 3개를 어떤 기준으로 정할 지 결정 후 개발
-     *
+     * @param articleId : 방 id
+     * @param memberId : 멤버 id
+     * @return : 권한 반환
      */
     @Override
-    public List<Member> findMembersByArticleId(Long articleId) {
+    public JoinStatus findJoinStatus(Long articleId , Long memberId) {
         return queryFactory
-                .select(member)
-                .from(member)
-                .join(member.article , article)
-                .where(article.id.eq(articleId))
-                .fetch();
+                .select(joinRequest.joinStatus)
+                .from(joinRequest)
+                .join(joinRequest.member , member)
+                .join(joinRequest.article , article)
+                .where(article.id.eq(articleId) ,
+                        member.id.eq(memberId))
+                .fetchOne();
     }
 
     /**

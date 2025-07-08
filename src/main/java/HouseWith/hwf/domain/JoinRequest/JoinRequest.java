@@ -13,6 +13,10 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+/**
+ * JoinStatus 의 필요성
+ * 한 사람당 가입 신청 가능한 방의 갯수가 3개까지 (본인 방 까지 합쳐서)
+ */
 public class JoinRequest {
     @Id @GeneratedValue
     @Column(name = "roomjoin_id")
@@ -25,14 +29,12 @@ public class JoinRequest {
 
 
     @ManyToOne(
-            fetch = FetchType.LAZY ,
-            cascade = CascadeType.ALL
+            fetch = FetchType.LAZY
     )
     private Article article;
 
     @ManyToOne(
-            fetch = FetchType.LAZY ,
-            cascade = CascadeType.ALL
+            fetch = FetchType.LAZY
     )
     private Member member;
 
@@ -48,11 +50,11 @@ public class JoinRequest {
         this.localDateTime = LocalDateTime.now();
     }
 
-    public void accept() {
+    public void join_accept() {
         this.joinStatus = JoinStatus.ACCEPTED;
     }
 
-    public void reject() {
+    public void join_reject() {
         this.joinStatus = JoinStatus.REJECTED;
     }
 

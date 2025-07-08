@@ -1,19 +1,30 @@
 package HouseWith.hwf.web.MainContext;
 
 import HouseWith.hwf.DTO.ArticleDTO;
+import HouseWith.hwf.DTO.DormitoryDTO;
 import HouseWith.hwf.DTO.MemberDTO;
 import HouseWith.hwf.DTO.RoomKeywordDTO;
+import HouseWith.hwf.Exceptions.RequestExceptioons.ArticleNotFoundException;
+import HouseWith.hwf.domain.Article.Article;
+import HouseWith.hwf.domain.Article.ArticleRepository;
 import HouseWith.hwf.domain.Article.ArticleRepositoryCustom;
 import HouseWith.hwf.domain.Member.Member;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class MainContextService {
-    private final ArticleRepositoryCustom articleRepository;
+    private final ArticleRepository articleRepository;
+
+    static String ERROR = "잘못된 요청입니다. ERROR CODE : ";
+
+    @Value("${ErrorCode.Request.UNAVAILABLE_REQUEST_NULL}")
+    private String error_NULL;
 
     /**
      * @return : 모든 글을 최신순으로 반환
@@ -21,6 +32,18 @@ public class MainContextService {
     public List<ArticleDTO> getAllArticles() {
         return articleRepository.findArticles();
     }
+
+
+    public Optional<DormitoryDTO> getArticleDetail(Long articleId) {
+        Optional<DormitoryDTO> dormitoryDTO = articleRepository
+                .findArticleByAcceptedMember(articleId);
+
+        if (dormitoryDTO.isEmpty())
+            throw new ArticleNotFoundException(ERROR + error_NULL);
+
+        return dormitoryDTO;
+    }
+
 
     /**
      * @param search_key : 검색창에 들어가는 키워드
@@ -53,14 +76,5 @@ public class MainContextService {
                 available_at,
                 dormitory
         );
-    }
-
-
-    /**
-     * @param articleId : 글 식별자
-     * @return : 해당 글에 있는 인원들 전부 반환
-     */
-    public List<Member> getArticleByArticleId(Long articleId) {
-        return articleRepository.findMembersByArticleId(articleId);
     }
 }

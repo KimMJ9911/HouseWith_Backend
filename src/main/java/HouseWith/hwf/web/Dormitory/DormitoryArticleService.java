@@ -41,6 +41,7 @@ public class DormitoryArticleService {
 
         Member owner = new Member(
                 memberDTO.getId() ,
+                memberDTO.getMemberStatus() ,
                 memberDTO.getName() ,
                 memberDTO.getPhone() ,
                 memberDTO.getEmail()
