@@ -1,9 +1,12 @@
-package HouseWith.hwf.DTO;
+package HouseWith.hwf.DTO.Article;
 
 import com.querydsl.core.annotations.QueryProjection;
+import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Getter
+@Data
+@NoArgsConstructor
 public class RoomKeywordDTO {
     private String dormitory;
     private String motion;

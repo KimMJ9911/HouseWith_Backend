@@ -1,19 +1,18 @@
-package HouseWith.hwf.web.MainContext;
+package HouseWith.hwf.web.MainContext.Service;
 
-import HouseWith.hwf.DTO.*;
+import HouseWith.hwf.DTO.Article.RoomKeywordDTO;
+import HouseWith.hwf.DTO.Main.ArticleDTO;
+import HouseWith.hwf.DTO.Main.ArticlePreviewDTO;
+import HouseWith.hwf.DTO.Article.DormitoryDTO;
 import HouseWith.hwf.Exceptions.RequestExceptioons.ArticleNotFoundException;
-import HouseWith.hwf.domain.Article.Article;
 import HouseWith.hwf.domain.Article.ArticleRepository;
-import HouseWith.hwf.domain.Article.ArticleRepositoryCustom;
 import HouseWith.hwf.domain.JoinRequest.JoinRequestRepository;
-import HouseWith.hwf.domain.Member.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,6 +43,7 @@ public class MainContextService {
 
         return articleDTOS.stream()
                 .map(article -> new ArticlePreviewDTO(
+                        article.getArticleId() ,
                         Times_Ago(article.getCreatedTime()) ,
                         article.getOwner_nickname() ,
                         article.getOwner() ,
@@ -83,7 +83,7 @@ public class MainContextService {
      */
     public Optional<DormitoryDTO> getArticleDetail(Long articleId) {
         Optional<DormitoryDTO> dormitoryDTO = articleRepository
-                .findArticleByAcceptedMember(articleId);
+                .findArticleAndAcceptedMember(articleId);
 
         if (dormitoryDTO.isEmpty())
             throw new ArticleNotFoundException(ERROR + error_NULL + " : " + articleId + "에 해당하는 방이 존재하지 않습니다.");
@@ -95,27 +95,28 @@ public class MainContextService {
     /**
      * @param search_key : 검색창에 들어가는 키워드
      * @param roomKeywordDTO : 방 조건 검색 키워드
-     * @param dormitory : 기숙사 검색 키워드
      * @return : 키워드들 바탕으로 검색한 방들 반환
      */
-    public List<ArticleDTO> getArticleByKeywords(
+    public List<ArticlePreviewDTO> getArticleByKeywords(
             String search_key,
-            RoomKeywordDTO roomKeywordDTO,
-            String dormitory) {
+            RoomKeywordDTO roomKeywordDTO) {
+
         // DTO가 null일 경우 각 필드도 null로 세팅
+        String dormitory = null;
         String motion = null;
         String smoke = null;
         String sleep_time = null;
         String available_at = null;
 
         if (roomKeywordDTO != null) {
+            dormitory = roomKeywordDTO.getDormitory();
             motion = roomKeywordDTO.getMotion();
             smoke = roomKeywordDTO.getSmoke();
             sleep_time = roomKeywordDTO.getSleep_time();
             available_at = roomKeywordDTO.getAvailable_eat();
         }
 
-        return articleRepository.findArticleByKeywords(
+        List<ArticleDTO> results = articleRepository.findArticleByKeywords(
                 search_key,
                 motion,
                 smoke,
@@ -123,5 +124,21 @@ public class MainContextService {
                 available_at,
                 dormitory
         );
+
+
+
+        return results.stream()
+                .map(article -> new ArticlePreviewDTO(
+                        article.getArticleId() ,
+                        Times_Ago(article.getCreatedTime()) ,
+                        article.getOwner_nickname() ,
+                        article.getOwner() ,
+                        article.getDormitory() ,
+                        article.getTitle() ,
+                        article.getQuarter() ,
+                        article.getJoin_member_count() ,
+                        article.getAccess_max() ,
+                        article.getComment()
+                )).collect(Collectors.toList());
     }
 }

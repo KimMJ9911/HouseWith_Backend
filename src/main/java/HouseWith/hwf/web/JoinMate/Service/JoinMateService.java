@@ -36,7 +36,6 @@ public class JoinMateService {
     private String error_DUPLICATED;
 
     /**
-     * @param ownerId : 방을 생성한 사람의 ID
      * @param articleId : 방 ID
      * @param memberId : 가입 신청한 사람의 ID
      *
@@ -48,9 +47,8 @@ public class JoinMateService {
      */
 
     public void ToJoin(
-            long ownerId ,
-            long articleId ,
-            long memberId
+            Long articleId ,
+            Long memberId
     ) {
         //중복 인원 가입 신청 예외처리 안해놓음 -> 수정 완료
         Article article =
@@ -67,22 +65,20 @@ public class JoinMateService {
 
         Member member =
                 memberRepository.findByMemberId(memberId);
+        //방에 신청한 모든 인원들(소유자 , 대기자 , 수락 , 거절)을 받아옵니다.
         List<Member> memberList =
-                memberRepository.findAllRequestByArticleId(articleId);
+                memberRepository.findAllMemberAtArticle(articleId);
 
         //받아올 멤버가 없는 경우
         if (member == null )
             throw new IllegalStateException(ERROR + error_NULL + " : 해당하는 멤버가 없습니다.");
 
         //중복 멤버가 껴있는 경우
-        //모든 리스트에서 멤버 id 를 대조 비교 (신청자 or 소육자)
+        //모든 리스트에서 멤버 id 를 대조 비교 (신청자 or 소유자)
         for (Member member_in : memberList) {
             if (Objects.equals(member_in.getId().toString(), String.valueOf(memberId)))
                 throw new IllegalStateException(ERROR + error_DUPLICATED + " : ");
         }
-
-        article.add_JoinMember_count(article.getJoin_member_count());
-        article.set_owner(ownerId);
 
         JoinRequest join = new JoinRequest(
                 article , member , JoinStatus.WAITING

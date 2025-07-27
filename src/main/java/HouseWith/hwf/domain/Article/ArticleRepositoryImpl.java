@@ -1,19 +1,18 @@
 package HouseWith.hwf.domain.Article;
 
-import HouseWith.hwf.DTO.*;
+
+import HouseWith.hwf.DTO.Main.ArticleDTO;
+import HouseWith.hwf.DTO.Article.DormitoryDTO;
+import HouseWith.hwf.DTO.Main.QArticleDTO;
+import HouseWith.hwf.DTO.MyPage.MemberDTO;
 import HouseWith.hwf.domain.JoinRequest.Custom.JoinStatus;
-import HouseWith.hwf.domain.JoinRequest.JoinRequest;
-import HouseWith.hwf.domain.JoinRequest.QJoinRequest;
-import HouseWith.hwf.domain.Member.Member;
 import com.querydsl.core.group.GroupBy;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
-import javax.swing.text.html.Option;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,12 +30,19 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
     /**
      * 전체 게시물 찾기
      * 25/6/23 - 업로드 시간 별로 저장 , 1 페이지 당 12 게시물
+     *
+     * 7/14 - 수정
+     * Pageable 로 무한 스크롤 구현
+     *
+     * // 수정 필요 //
+     * 생성시간 기준 -> 수정 시간 기준으로 변경 필요
      */
 
     @Override
     public List<ArticleDTO> findArticles() {
         return queryFactory
                 .select(new QArticleDTO(
+                        article.id ,
                         article.owner_nickname,
                         article.owner ,
                         article.createdTime ,
@@ -48,22 +54,31 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                         article.comment ,
                         article.open_url))
                 .from(article)
-                .orderBy(article.createdTime.desc())
-                .offset(0)
-                .limit(12)
+                .orderBy(article.createdTime.desc() , article.id.desc())
                 .fetch();
     }
+
+//    static BooleanExpression lastIdCondition(LocalDateTime lastCreatedTime , Long lastId) {
+//        if (lastCreatedTime == null || lastId == null) return null;
+//
+//        return article.createdTime.lt(lastCreatedTime)
+//                .or(article.id.lt(lastId)).and(article.createdTime.eq(lastCreatedTime));
+//    }
 
     /**
      * 6/26 -
      * article_Id 로 게시글 검색
      *
-     * 7/8 - 수장
+     * 7/8 - 수정
      * articleId로 해당 방의 정보들 전체 반환
      * 방에 속한 member 들 전부 반환
+     *
+     * DTO 에서의 N + 1 문제 해결을 위해서 groupBy 와 Transform 을 사용한다.
+     * DTO 에서 다대다 관계나 다대일 관계 , 일대일 관계를 포함한 경우 발생한다
+     * transform -> 데이터를 in-memory 형식으로 flat 하게 받아오는 방법 이용
      */
     @Override
-    public Optional<DormitoryDTO> findArticleByAcceptedMember(Long articleId) {
+    public Optional<DormitoryDTO> findArticleAndAcceptedMember(Long articleId) {
         Map<Long , DormitoryDTO> result = queryFactory
                 .from(article)
                 .leftJoin(article.joinRequests , joinRequest)
@@ -77,20 +92,20 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                                 article.dormitory ,
                                 article.title ,
                                 article.quarter ,
-                                article.join_member_count ,
                                 article.access_max ,
                                 article.comment ,
                                 article.open_url ,
                                 list(
                                         Projections.constructor(MemberDTO.class ,
                                                 member.id ,
-                                                joinRequest.joinStatus ,
                                                 member.name ,
+                                                member.introduction_comment ,
                                                 member.phone ,
                                                 member.email ,
                                                 member.nickname ,
                                                 member.sex ,
-                                                member.dormitoryName).skipNulls()
+                                                member.dormitoryName ,
+                                                member.livingPattern).skipNulls()
                                 ))
                 ));
 
@@ -110,9 +125,15 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
      *
      */
     @Override
-    public List<ArticleDTO> findArticleByKeywords(String search_key , String motion , String smoke , String sleep_time , String available_at , String dormitory) {
+    public List<ArticleDTO> findArticleByKeywords(String search_key ,
+                                                  String motion ,
+                                                  String smoke ,
+                                                  String sleep_time ,
+                                                  String available_at ,
+                                                  String dormitory) {
         return queryFactory
                 .select(new QArticleDTO(
+                        article.id ,
                         article.owner_nickname ,
                         article.owner ,
                         article.createdTime ,
@@ -124,10 +145,9 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                         article.comment ,
                         article.open_url))
                 .from(article)
-                .join(article.roomKeyword , roomKeyword)
+                .leftJoin(article.roomKeyword , roomKeyword)
                 .where(
-                        search_keyEq_title(search_key) ,
-                        search_keyEq_comment(search_key) ,
+                        searchKeyCondition(search_key) ,
                         motionEq(motion) ,
                         smokeEq(smoke) ,
                         sleep_timeEq(sleep_time) ,
@@ -141,22 +161,24 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
     /**
      * 6/25 -
      * 검색 키워드 추가 - 검색창
+     *
+     * 7/4 - 수정 완료
+     * 검색창에서 기숙사 이름 검색을 제외했습니다.
      */
-    private BooleanExpression search_keyEq_title(String search_key){
-        return search_key == null ? article.title.like("%"+search_key+"%") : null;
+    private BooleanExpression searchKeyCondition(String search_key) {
+        if (search_key == null || search_key.trim().isEmpty()) return null;
+
+        String keyword = "%" + search_key.trim() + "%";
+        return article.title.like(keyword).or(article.comment.like(keyword));
     }
 
-    private BooleanExpression search_keyEq_comment(String search_key){
-        return search_key == null ? article.comment.like("%"+search_key+"%") : null;
-    }
-
-    private BooleanExpression search_dormitoryEq(String dormitory){
-        return dormitory == null ? article.dormitory.like("%"+dormitory+"%") : null;
-    }
 
     /**
      * 6/25 -
      * 검색 조건 키워드 추가 - 버튼
+     *
+     * 7/13 - 수정
+     * 검색 키워드에 기숙사 이름도 추가
      */
 
     private BooleanExpression motionEq(String motion) {
@@ -178,6 +200,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
     private BooleanExpression dormitoryEq(String dormitory) {
         return dormitory != null ? article.dormitory.eq(dormitory) : null;
     }
+
 
     public Article findArticlesById(Long articleId) {
         return queryFactory
@@ -210,7 +233,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                 .from(joinRequest)
                 .join(joinRequest.member , member)
                 .where(joinRequest.member.id.eq(memberId) ,
-                        joinRequest.joinStatus.eq(JoinStatus.OWNER))
+                        joinRequest.joinStatus.in(JoinStatus.OWNER , JoinStatus.ACCEPTED))
                 .fetchOne();
         return cnt == null ? 0L : cnt;
     }
@@ -227,6 +250,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
     public List<ArticleDTO> findArticleByTime_Admin(LocalDate localDate) {
         return queryFactory
                 .select(new QArticleDTO(
+                        article.id ,
                         article.owner_nickname ,
                         article.owner ,
                         article.createdTime ,

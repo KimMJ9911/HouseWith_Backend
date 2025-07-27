@@ -1,7 +1,6 @@
 package HouseWith.hwf.domain.Member;
 
-import HouseWith.hwf.domain.Article.Article;
-import HouseWith.hwf.domain.JoinRequest.Custom.JoinStatus;
+import HouseWith.hwf.DTO.MyPage.MyPageDTO;
 import HouseWith.hwf.domain.JoinRequest.JoinRequest;
 import HouseWith.hwf.domain.LivingPattern.LivingPattern;
 import jakarta.persistence.*;
@@ -13,7 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Getter @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
     @Id @GeneratedValue
     @Column(name = "member_id")
@@ -31,11 +31,9 @@ public class Member {
     private String username;
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "DEFAULT 'NON'")
-    private JoinStatus MemberStatus;
 
     private String name;
+    private String introduction_comment;
     private String phone;
     private String email;
 
@@ -45,8 +43,8 @@ public class Member {
 
     public Member(
             Long memberID ,
-            JoinStatus MemberStatus ,
             String name ,
+            String introduction_comment ,
             String phone ,
             String email ,
             String nickname ,
@@ -54,8 +52,8 @@ public class Member {
             String dormitoryName
     ) {
         this.id = memberID;
-        this.MemberStatus = MemberStatus;
         this.name = name;
+        this.introduction_comment = introduction_comment;
         this.phone = phone;
         this.email = email;
         this.nickname = nickname;
@@ -64,13 +62,14 @@ public class Member {
     }
 
     //추후에 OAuth 를 통해 받아올 데이터들 저장할 흐름
-    public Member(Long memberId , JoinStatus MemberStatus , String name, String phone, String email) {
-        this.id = memberId;
-        this.MemberStatus = MemberStatus;
-        this.name = name;
-        this.phone = phone;
-        this.email = email;
-    }
+    //미사용
+//    public Member(Long memberId ,  String name, String phone, String email) {
+//        this.id = memberId;
+//
+//        this.name = name;
+//        this.phone = phone;
+//        this.email = email;
+//    }
 
     //회원 정보 받아오기
     public Member(
@@ -90,17 +89,14 @@ public class Member {
     }
 
     //생활 패턴들 받아오기
-    public Member(
-            LivingPattern livingPattern
-    ) {
+    public void poll_LP(LivingPattern livingPattern) {
         this.livingPattern = livingPattern;
     }
 
-    public void change_Accept() {
-        this.MemberStatus = JoinStatus.ACCEPTED;
-    }
-
-    public void change_Reject() {
-        this.MemberStatus = JoinStatus.REJECTED;
+    public void change_info(MyPageDTO myPageDTO) {
+        this.nickname = myPageDTO.getNickname();
+        this.introduction_comment = myPageDTO.getIntroduction_comment();
+        this.dormitoryName = myPageDTO.getDormitoryName();
+        this.livingPattern = myPageDTO.getLivingPattern();
     }
 }

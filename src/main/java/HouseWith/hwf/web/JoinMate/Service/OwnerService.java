@@ -2,6 +2,7 @@ package HouseWith.hwf.web.JoinMate.Service;
 
 import HouseWith.hwf.Exceptions.RequestExceptioons.IllegalJoinStatusException;
 import HouseWith.hwf.Exceptions.RequestExceptioons.MemberNotFoundException;
+import HouseWith.hwf.domain.Article.Article;
 import HouseWith.hwf.domain.Article.ArticleRepository;
 import HouseWith.hwf.domain.JoinRequest.Custom.JoinStatus;
 import HouseWith.hwf.domain.JoinRequest.JoinRequest;
@@ -71,6 +72,8 @@ public class OwnerService {
                 memberRepository.findByMemberId(memberId);
         JoinRequest request =
                 joinRequestRepository.findByMember(memberId , articleId);
+        Article room =
+                articleRepository.findArticlesById(articleId);
 
         //신청자의 지원 사항
         JoinStatus joinStatus =
@@ -86,15 +89,15 @@ public class OwnerService {
         }
 
         if (joinStatus == JoinStatus.WAITING && status == JoinStatus.ACCEPTED) {
-            member.change_Accept();
             request.join_accept();
+            room.add_JoinMember_count(room.getJoin_member_count());
         }
         else if (joinStatus == JoinStatus.WAITING && status == JoinStatus.REJECTED) {
-            member.change_Reject();
             request.join_reject();
         }
         else throw new IllegalJoinStatusException(ERROR + param_ERROR + " : 신청 상황을 확인해주세요");
 
+        articleRepository.save(room);
         joinRequestRepository.save(request);
         memberRepository.save(member);
 

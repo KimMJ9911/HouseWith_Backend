@@ -1,16 +1,10 @@
 package HouseWith.hwf.domain.JoinRequest;
 
-import HouseWith.hwf.DTO.ArticleDTO;
-import HouseWith.hwf.DTO.QArticleDTO;
-import HouseWith.hwf.domain.Article.QArticle;
 import HouseWith.hwf.domain.JoinRequest.Custom.JoinStatus;
-import com.querydsl.core.types.dsl.Wildcard;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
-
-import java.util.List;
 
 import static HouseWith.hwf.domain.Article.QArticle.article;
 import static HouseWith.hwf.domain.JoinRequest.QJoinRequest.joinRequest;

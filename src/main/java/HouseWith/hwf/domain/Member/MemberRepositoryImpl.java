@@ -1,10 +1,8 @@
 package HouseWith.hwf.domain.Member;
 
-import HouseWith.hwf.DTO.MemberDTO;
-import HouseWith.hwf.DTO.QMemberDTO;
-import HouseWith.hwf.domain.Article.QArticle;
+import HouseWith.hwf.DTO.MyPage.MemberDTO;
+import HouseWith.hwf.DTO.MyPage.QMemberDTO;
 import HouseWith.hwf.domain.JoinRequest.Custom.JoinStatus;
-import HouseWith.hwf.domain.JoinRequest.JoinRequest;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -15,6 +13,7 @@ import java.util.List;
 
 import static HouseWith.hwf.domain.Article.QArticle.article;
 import static HouseWith.hwf.domain.JoinRequest.QJoinRequest.joinRequest;
+import static HouseWith.hwf.domain.LivingPattern.QLivingPattern.*;
 import static HouseWith.hwf.domain.Member.QMember.member;
 
 @RequiredArgsConstructor
@@ -25,7 +24,6 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
     private final JPAQueryFactory queryFactory;
 
     /**
-     *
      * 6/26 -
      * 해당 방에서 요청을 보낸 사람들 목록을 받아오는 로직
      * JoinStatus 가 WAITING 인 사람만 가능
@@ -41,6 +39,11 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
                 .fetch();
     }
 
+    /**
+     * 7/13 - 개발 완료
+     * @param articleId : 방 ID
+     * @return : 방에 있는 모든 인원들(소유자 , 가입 , 거절 , 대기 인원 모두 받아옵니다.)
+     */
     @Override
     public List<Member> findAllMemberAtArticle(long articleId) {
         return queryFactory
@@ -55,7 +58,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
 
     /**
      * 6/28 - 산청 후 WAITING , REJECTED 성탸인 사용자에 대한 만료 작업 ,크론탭을 이용한 자동화 작업 진행
-     * @param threshold : 산청 후 WAITING , REJECTED 성탸인 사용자에 대한 만료 시간
+     * @param threshold : 산청 후 WAITING , REJECTED 상태인 사용자에 대한 만료 시간
      */
 
     @Override
@@ -98,5 +101,25 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
                 .selectFrom(member)
                 .where(member.nickname.eq(nickname))
                 .fetchOne() != null;
+    }
+
+    @Override
+    public MemberDTO getPersonalInfo(Long memberId) {
+        return queryFactory
+                .select(new QMemberDTO(
+                        member.id ,
+                        member.name ,
+                        member.introduction_comment ,
+                        member.phone ,
+                        member.email ,
+                        member.nickname ,
+                        member.sex ,
+                        member.dormitoryName ,
+                        member.livingPattern
+                ))
+                .from(member)
+                .leftJoin(member.livingPattern , livingPattern)
+                .where(member.id.eq(memberId))
+                .fetchOne();
     }
 }

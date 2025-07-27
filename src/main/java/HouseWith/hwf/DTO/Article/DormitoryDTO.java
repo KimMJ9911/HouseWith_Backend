@@ -1,12 +1,15 @@
-package HouseWith.hwf.DTO;
+package HouseWith.hwf.DTO.Article;
 
+import HouseWith.hwf.DTO.MyPage.MemberDTO;
 import com.querydsl.core.annotations.QueryProjection;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
+@NoArgsConstructor
 public class DormitoryDTO {
     //글 Id
     private Long articleId;

@@ -1,9 +1,8 @@
-package HouseWith.hwf.web.Dormitory;
+package HouseWith.hwf.web.Dormitory.Service;
 
-import HouseWith.hwf.DTO.ArticleDTO;
-import HouseWith.hwf.DTO.JoinRequestDTO;
-import HouseWith.hwf.DTO.MemberDTO;
-import HouseWith.hwf.DTO.RoomKeywordDTO;
+import HouseWith.hwf.DTO.Main.ArticleDTO;
+import HouseWith.hwf.DTO.Article.JoinRequestDTO;
+import HouseWith.hwf.DTO.Article.RoomKeywordDTO;
 import HouseWith.hwf.Exceptions.RequestExceptioons.ArticleNotFoundException;
 import HouseWith.hwf.Exceptions.RequestExceptioons.IllegalJoinStatusException;
 import HouseWith.hwf.domain.Article.Article;
@@ -55,6 +54,9 @@ public class DormitoryArticleService {
      * 생성 완료 후 OWNER 의 ownerId 저장하지 않는 문제 수정 필요
      * -> 수정 완료
      * 생성한 사람의 memberId(ownerId) 를 받아오도록 변경
+     *
+     * 뭔가 잘못됐다 -> 방 생성 후 최대 1개까지만 작성 가능했는데 왜 중복 생성이 가능하지? 딱 2개까지만?
+     * 수정해야 한다....
      */
     @Transactional
     public Article createRoom(
@@ -65,13 +67,13 @@ public class DormitoryArticleService {
 
         /**
          * 해당 인물이 작성한 방의 갯수
-         * 최대 1개까지 작성 가능하도록 -> 이거 작동 안됨
+         * 최대 1개까지 작성 가능하도록
          */
         long cnt = articleRepository
                 .countArticlesByMember(ownerId);
 
-        if (cnt > 1)
-            throw new IllegalJoinStatusException(ERROR + error_OVERFLOW + " : 방을 한 개 이상 생성하였습니다.");
+        if (cnt >= 1)
+            throw new IllegalJoinStatusException(ERROR + error_OVERFLOW + " : 방을 한 개 이상 생성 혹은 가입하였습니다.");
 
         Member member = memberRepository
                 .findByMemberId(ownerId);
@@ -121,11 +123,10 @@ public class DormitoryArticleService {
     }
 
     public Article modifyRoom(
+            Long ownerId ,
             Long articleId ,
             ArticleDTO articleDTO ,
             RoomKeywordDTO roomKeywordDTO) {
-
-        long ownerId = articleDTO.getOwner();
 
         JoinStatus status =
                 articleRepository.findJoinStatus(ownerId , articleId);
@@ -150,5 +151,14 @@ public class DormitoryArticleService {
         //키워드 입력
         newRoom.set_roomKeyword(roomKeyword);
         return newRoom;
+    }
+
+    /**
+     * @param articleId : 방 검색용
+     * @param memberId : 사용자 Id
+     * @return : 사용자 ID 를 통해 사용자가 해당 방에서의 권한을 받아오는 로직
+     */
+    public JoinStatus getStatus(Long articleId , Long memberId) {
+        return articleRepository.findJoinStatus(articleId , memberId);
     }
 }

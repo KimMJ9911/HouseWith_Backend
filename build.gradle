@@ -36,8 +36,8 @@ dependencies {
 	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
 	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 
-	//UNIVCERT API
-	implementation 'com.github.in-seo:univcert:master-SNAPSHOT'
+	//yaml 파일 동적 설정용 snakeyaml
+	implementation 'org.yaml:snakeyaml:2.2'
 
 	//Swagger-ui
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'

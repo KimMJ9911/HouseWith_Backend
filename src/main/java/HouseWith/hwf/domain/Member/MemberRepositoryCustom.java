@@ -1,7 +1,6 @@
 package HouseWith.hwf.domain.Member;
 
-import HouseWith.hwf.DTO.MemberDTO;
-import HouseWith.hwf.domain.JoinRequest.JoinRequest;
+import HouseWith.hwf.DTO.MyPage.MemberDTO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,5 +11,6 @@ public interface MemberRepositoryCustom {
     void updateOverThreshold(LocalDateTime threshold);
     Member findByMemberId(long memberId);
     boolean existsByNickname(String nickname);
+    MemberDTO getPersonalInfo(Long memberId);
 
 }

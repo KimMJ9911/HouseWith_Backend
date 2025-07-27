@@ -1,8 +1,7 @@
 package HouseWith.hwf.domain.Keywords;
 
-import HouseWith.hwf.DTO.RoomKeywordDTO;
+import HouseWith.hwf.DTO.Article.RoomKeywordDTO;
 import HouseWith.hwf.domain.Article.Article;
-import com.querydsl.core.annotations.QueryProjection;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

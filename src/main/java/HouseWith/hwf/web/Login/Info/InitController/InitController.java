@@ -1,10 +1,11 @@
-package HouseWith.hwf.web.Login.InitInfo.Controller;
+package HouseWith.hwf.web.Login.Info.InitController;
 
-import HouseWith.hwf.DTO.LivingPatternDTO;
+import HouseWith.hwf.DTO.MyPage.LivingPatternDTO;
 import HouseWith.hwf.domain.Member.Member;
 import HouseWith.hwf.domain.Member.MemberRepository;
-import HouseWith.hwf.web.Login.InitInfo.Service.InitService;
+import HouseWith.hwf.web.Login.Info.Service.InfoService.InfoService;
 import HouseWith.hwf.web.Login.Security.JWT.JwtUtil;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,7 +20,7 @@ import java.util.Map;
 @RequestMapping("user-info")
 public class InitController {
     private final MemberRepository memberRepository;
-    private final InitService initService;
+    private final InfoService infoService;
     private final JwtUtil jwtUtil;
 
     @Value("${univcert.key}")
@@ -62,13 +62,16 @@ public class InitController {
      *
      * 7/8 - 수정 완료 , 테스트 완료
      */
+    @Operation(
+            summary = "회원 가입로직"
+    )
     @PostMapping("basicInfo")
-    public ResponseEntity<?> SignIn(
+    public String SignIn(
             @RequestParam(value = "email") String YonseiEmail,
             @RequestParam String nickname,
             @RequestParam String sex ,
             @RequestParam(value = "dormitory") String dormitoryName) {
-        Member member = initService.getInitData(
+        Member member = infoService.getInitData(
                 "user1" , "password!" , YonseiEmail , nickname , sex , dormitoryName
         );
 
@@ -79,7 +82,7 @@ public class InitController {
 //        );
 
         memberRepository.save(member);
-        return ResponseEntity.ok("userID :" + member.getId());
+        return "userID :" + member.getId();
     }
 
     /**
@@ -87,12 +90,16 @@ public class InitController {
      * @param nickname : 중복 검사할 닉네임
      * @return : ok -> 중복 있음
      */
+    @Operation(
+            summary = "닉네임 중복 체크" ,
+            description = "불건전한 닉네임 체크는 구현하지 않았습니다. 추후에 개발 예정입니다."
+    )
     @GetMapping("nickDup")
-    public ResponseEntity<?> NickDup(
+    public String NickDup(
             @RequestParam String nickname
     ) {
-        return initService.nickDuplicateCheck(nickname) ?
-               ResponseEntity.ok("DUPLICATED") : ResponseEntity.ok("NOT_DUPLICATED");
+        return infoService.nickDuplicateCheck(nickname) ?
+               "DUPLICATED" : "NOT_DUPLICATED";
     }
 
     /**
@@ -100,11 +107,19 @@ public class InitController {
      * @param livingPatternDTO : 개인 생활 패턴을 받아오는 DTO
      * @return : 받아서 저장합니다. -> 수정 기능은 추후에 개발
      */
+    @Operation(
+            summary = "사용자 세부 키워드" ,
+            description = """
+                    사용자 키워드들을 적는 로직입니다. \n
+                    마이 페이지 구현이 안되어있어 필수 기능으로 넣진 않고 멤버와 연결은 안했습니다. 추후에 수정할 생각입니다.
+                    """
+    )
     @PostMapping("patternInfo")
     public ResponseEntity<?> PatternInfo(
-            @RequestBody LivingPatternDTO livingPatternDTO) {
+            @RequestBody LivingPatternDTO livingPatternDTO ,
+            @RequestParam String memberId) {
         memberRepository
-                .save(initService.getLivingPattern(livingPatternDTO));
+                .save(infoService.getLivingPattern(livingPatternDTO , Long.parseLong(memberId)));
         return ResponseEntity.ok().build();
     }
 }

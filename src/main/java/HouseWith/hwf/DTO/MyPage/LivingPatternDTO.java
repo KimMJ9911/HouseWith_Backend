@@ -1,4 +1,4 @@
-package HouseWith.hwf.DTO;
+package HouseWith.hwf.DTO.MyPage;
 
 import lombok.Getter;
 

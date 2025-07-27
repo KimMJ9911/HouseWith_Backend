@@ -1,12 +1,16 @@
-package HouseWith.hwf.DTO;
+package HouseWith.hwf.DTO.Main;
 
 import com.querydsl.core.annotations.QueryProjection;
+import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Getter
+@Data
+@NoArgsConstructor
 public class ArticleDTO {
+    private Long articleId;
     //소유자 닉네임
     private String owner_nickname;
     //소유자 ID
@@ -30,7 +34,8 @@ public class ArticleDTO {
 
 
     @QueryProjection
-    public ArticleDTO(String owner_nickname ,
+    public ArticleDTO(Long articleId ,
+                      String owner_nickname ,
                       Long owner,
                       LocalDateTime createdTime ,
                       String dormitory ,
@@ -40,6 +45,7 @@ public class ArticleDTO {
                       Integer access_max ,
                       String comment ,
                       String open_url) {
+        this.articleId = articleId;
         this.owner_nickname = owner_nickname;
         this.owner = owner;
         this.createdTime = createdTime;

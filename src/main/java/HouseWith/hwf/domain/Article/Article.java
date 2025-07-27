@@ -1,6 +1,6 @@
 package HouseWith.hwf.domain.Article;
 
-import HouseWith.hwf.DTO.ArticleDTO;
+import HouseWith.hwf.DTO.Main.ArticleDTO;
 import HouseWith.hwf.domain.JoinRequest.JoinRequest;
 import HouseWith.hwf.domain.Keywords.RoomKeyword;
 import jakarta.persistence.*;
