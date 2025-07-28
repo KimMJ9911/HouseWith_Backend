@@ -21,3 +21,6 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# 민감 정보 포함된 설정 파일 무시
+src/main/resources/application.yml
