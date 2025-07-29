@@ -23,3 +23,6 @@ jobs:
 
     - name: Gradle 빌드 실행
       run: ./gradlew clean build
+
+    - name: Build without Test
+      run: ./gradlew clean build -x test
